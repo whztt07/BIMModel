@@ -1,0 +1,63 @@
+apply plugin: "com.android.model.native"
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def SRC_DIR = properties.getProperty('bim.dir')
+
+model {
+
+    android {
+        compileSdkVersion 23
+        buildToolsVersion "23.0.2"
+
+        defaultConfig {
+            minSdkVersion.apiLevel 19
+            targetSdkVersion.apiLevel 23
+        }
+
+        ndk {
+            moduleName "bim"
+//            toolchain "clang"
+//            toolchainVersion "3.6"
+            platformVersion = 19
+            stl "gnustl_shared"
+            abiFilters.add("armeabi")
+            abiFilters.add("armeabi-v7a")
+
+            cppFlags.add("-frtti")
+            cppFlags.add("-fexceptions")
+            cppFlags.add("-std=c++11")
+
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/osg").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/sqlite3").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/YZEffect").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/common").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/dragon").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/giraffe").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/modelcore").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/sqlitedb").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/swallow").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/tiger").absolutePath)
+
+            cppFlags.add("-DOSGCORE")
+            cppFlags.add("-DOSG_LIBRARY_STATIC")
+
+        }
+        sources {
+            main {
+                jni {
+//                    exportedHeaders {
+//                    }
+                    source {
+                        srcDirs += SRC_DIR + '/src/Dragon'
+                        srcDirs += SRC_DIR + '/src/Giraffe'
+                        srcDirs += SRC_DIR + '/src/ModelCore'
+                        srcDirs += SRC_DIR + '/src/SqliteDB'
+                        srcDirs += SRC_DIR + '/src/Swallow'
+                        srcDirs += SRC_DIR + '/src/Tiger'
+                    }
+                }
+            }
+        }
+    }
+}

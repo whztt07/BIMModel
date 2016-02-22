@@ -1,0 +1,198 @@
+apply plugin: "com.android.model.native"
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def SRC_DIR = properties.getProperty('osg.dir')
+
+model {
+    repositories {
+
+        libs(PrebuiltLibraries) {
+            libosgdb_ive {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgdb_ive.a")
+                }
+            }
+            libosgViewer {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgViewer.a")
+                }
+            }
+            libosgVolume {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgVolume.a")
+                }
+            }
+            libosgTerrain {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgTerrain.a")
+                }
+            }
+            libosgText {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgText.a")
+                }
+            }
+            libosgSim {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgSim.a")
+                }
+            }
+            libosgManipulator {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgManipulator.a")
+                }
+            }
+            libosgGA {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgGA.a")
+                }
+            }
+            libosgFX {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgFX.a")
+                }
+            }
+            libosgDB {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgDB.a")
+                }
+            }
+            libosgAnimation {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgAnimation.a")
+                }
+            }
+            libosgUtil {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosgUtil.a")
+                }
+            }
+            libosg {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libosg.a")
+                }
+            }
+            libOpenThreads {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libOpenThreads.a")
+                }
+            }
+            libpng {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libpng.a")
+                }
+            }
+            libsqlite3 {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libsqlite3.a")
+                }
+            }
+            libft2 {
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("src/main/jni/3rdParty/lib/${targetPlatform.getName()}/libft2.a")
+                }
+            }
+        }
+    }
+
+    android {
+        compileSdkVersion 23
+        buildToolsVersion "23.0.2"
+
+        defaultConfig {
+            minSdkVersion.apiLevel 19
+            targetSdkVersion.apiLevel 23
+        }
+
+        ndk {
+
+            moduleName "modelView"
+//            toolchain "clang"
+//            toolchainVersion "3.6"
+            platformVersion = 19
+            stl "gnustl_shared"
+            abiFilters.add("armeabi")
+            abiFilters.add("armeabi-v7a")
+
+            cppFlags.add("-frtti")
+            cppFlags.add("-fexceptions")
+            cppFlags.add("-std=c++11")
+
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/osg").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/sqlite3").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/png").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/common").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/dragon").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/giraffe").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/modelcore").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/sqlitedb").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/swallow").absolutePath)
+            cppFlags.add("-I" + file("src/main/jni/3rdParty/bim/tiger").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/public").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZAnimation").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZEffect").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZGeometry").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZGraphics").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZModelBLL").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZModelCore").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZModelEntity").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZSceneGraph").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZTools").absolutePath)
+            cppFlags.add("-I" + file(SRC_DIR + "/inc/YZMaterial").absolutePath)
+            cppFlags.add("-DOSG_LIBRARY_STATIC")
+            cppFlags.add("-DOSGCORE")
+            cppFlags.add("-DUSING_BOUNDING_SPHERE")
+            cppFlags.add("-DAndroid")
+            cppFlags.add("-DNEED_RAISE_EVENTS")
+
+            ldLibs.add("log")
+            ldLibs.add("GLESv2")
+            ldLibs.add("z")
+            ldLibs.add("atomic")
+            ldLibs.add("log")
+            ldLibs.add("dl")
+
+        }
+        sources {
+            main {
+                jni {
+                    dependencies {
+                        project ":libbim" linkage "static"
+                        library "libosgdb_ive" linkage "static"
+                        library "libosgViewer" linkage "static"
+                        library "libosgVolume" linkage "static"
+                        library "libosgTerrain" linkage "static"
+                        library "libosgText" linkage "static"
+                        library "libosgSim" linkage "static"
+                        library "libosgManipulator" linkage "static"
+                        library "libosgGA" linkage "static"
+                        library "libosgFX" linkage "static"
+                        library "libosgDB" linkage "static"
+                        library "libosgAnimation" linkage "static"
+                        library "libosgUtil" linkage "static"
+                        library "libosg" linkage "static"
+                        library "libOpenThreads" linkage "static"
+                        library "libpng" linkage "static"
+                        library "libsqlite3" linkage "static"
+                        library "libft2" linkage "static"
+                    }
+//                    exportedHeaders {
+//                    }
+                    source {
+                        srcDirs += SRC_DIR + '/src/YZAnimation'
+                        srcDirs += SRC_DIR + '/src/YZEffect'
+                        srcDirs += SRC_DIR + '/src/YZModelBLL'
+                        srcDirs += SRC_DIR + '/src/YZModelCore'
+                        srcDirs += SRC_DIR + '/src/YZModelEntity'
+                        srcDirs += SRC_DIR + '/src/YZSceneGraph'
+                        srcDirs += SRC_DIR + '/src/YZSqlite'
+                        srcDirs += SRC_DIR + '/src/YZTools'
+                        srcDirs += SRC_DIR + '/src/YZMaterial'
+                        srcDirs += 'src/main/jni/Wrapper'
+                    }
+                }
+            }
+        }
+    }
+}

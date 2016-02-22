@@ -1,0 +1,1 @@
+include ':app', ':libmodelView', ':libbim'
