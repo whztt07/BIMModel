@@ -13,9 +13,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 
+import junit.framework.Test;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 public class OSGActivity extends AppCompatActivity{
     private static final String TAG = "OSG Activity";
@@ -52,6 +56,22 @@ public class OSGActivity extends AppCompatActivity{
             @Override
             public void IsSingelTagUp(String singleValue) {
                 checkedValue = singleValue;
+                HashMap<String,Object> propertiesMap = ModelView.getEntityInfo(checkedValue);
+                String floor = (String)propertiesMap.get("floor");
+                Log.e(TAG,"floor = "+floor);
+                String domain = (String)propertiesMap.get("domain");
+                Log.e(TAG,"domain = "+domain);
+                String category = (String)propertiesMap.get("category");
+                Log.e(TAG,"category = "+category);
+                String name = (String)propertiesMap.get("name");
+                Log.e(TAG,"name = "+name);
+                String revitId = (String)propertiesMap.get("revitId");
+                Log.e(TAG,"revitId = "+revitId);
+                HashMap<String,HashMap<String,String>> propMap = (HashMap<String,HashMap<String,String>>)propertiesMap.get("properties");
+                Set<String> keys = propMap.keySet();
+                for(String key :keys){
+                    Log.e(TAG, "key=" + key + " value=" + propMap.get(key));
+                }
                 Log.e(TAG,"SingleValue == "+singleValue);
             }
         });
@@ -111,15 +131,16 @@ public class OSGActivity extends AppCompatActivity{
 //                    Log.e(TAG,"1== "+checkedValue);
 //                    ModelView.hiddenOtherEntities(checkedValue);
 //                }
-                viewMap = ModelView.getViewportCameraView();
+//                viewMap = ModelView.getViewportCameraView();
                 break;
             case R.id.text4:
 //                if(!TextUtils.isEmpty(checkedValue)) {
 //                    Log.e(TAG,"2== "+checkedValue);
 //                    ModelView.unHiddenOtherEntities(checkedValue);
 //                }
-                if(viewMap!=null && viewMap.size()>0)
-                    ModelView.zoomToViewPortCenter(viewMap);
+//                if(viewMap!=null && viewMap.size()>0)
+//                    ModelView.zoomToViewPortCenter(viewMap);
+                startActivity(new Intent(OSGActivity.this, TestActivity.class));
                 break;
             default:
                 break;

@@ -2,6 +2,7 @@ package net.ezbim.modelview;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ModelView {
 
@@ -79,7 +80,7 @@ public class ModelView {
 
     public static native boolean needRenderNow();
 
-//    public static native void exitModelView();//退出ModelView，清理ModelView在JNI的引用。如果需要重新调用，需要重新initModelView
+    public static native void exitModelView();//退出ModelView，清理ModelView在JNI的引用。如果需要重新调用，需要重新initModelView
 
     public static native void hiddenEntity(String entityId); //隐藏某个构件
 
@@ -88,5 +89,15 @@ public class ModelView {
     public static native void unHiddenEntity(String entityId);//取消隐藏某个构件
 
     public static native void unHiddenOtherEntities(String entityId);//取消（只显示当前的构件，隐藏其他构件）的状态
+
+    public static native void resizeView(int x,int y,int weight,int height);//不影响适口的清空下改变窗口大小
+
+    public static native void zoomToEntity(String entityId);//定位到某个构件，其他构件处于透明状态。
+
+    public static native void zoomToEntities(ArrayList<String> entities);//定位到一组构件，其他构件处于透明状态。
+
+    public static native void unTransParentAll();//取消（其他构件处于透明状态）。
+
+    public static native HashMap<String,Object> getEntityInfo(String entityId);
 
 }

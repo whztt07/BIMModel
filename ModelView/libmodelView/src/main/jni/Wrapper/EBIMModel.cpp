@@ -3,7 +3,6 @@
 //
 
 #include "EBIMModel.hpp"
-#include <string>
 
 EBIMModel::EBIMModel() {
     modelViewer = NULL;
@@ -216,7 +215,7 @@ int EBIMModel::preProcessBIMFile(std::string path,bool byFloor){
         return 5;
     }
 }
-
+//获得视口参数
 std::map<int,std::vector<double>>  EBIMModel::getViewportCameraView(){
     std::map<int,std::vector<double>> viewPortMap;
     bimWorld::BIMCameraView cameraView;
@@ -240,7 +239,11 @@ std::map<int,std::vector<double>>  EBIMModel::getViewportCameraView(){
     viewPortMap.insert(std::make_pair(3,distanceVector));
     return viewPortMap;
 }
+//获得视口参数并且截屏
+std::map<int,std::vector<double>> EBIMModel::glToUIImage(){
 
+}
+//还原适口参数
 void EBIMModel::zoomToViewPortCenter(std::vector<double> center,double distance,std::vector<double> rot){
     bimWorld::BIMCameraView camera;
     for (int i = 0; i < 3; i++) {
@@ -360,4 +363,185 @@ void EBIMModel::unHiddenOtherEntities(std::string entityId){
         modelViewer->NodeControl()->unHideOthers(entityId);
     }
     modelViewer->RenderingThread()->updateSeveralTimes();
+}
+void EBIMModel::resizeView(int x,int y,int width,int height){
+    modelViewer->EventHandlers()->onResize(x,y,width,height);
+}
+//构件 定位
+void EBIMModel::zoomToEntities(std::vector<std::string> entityArray){
+    std::vector<std::string> entities;
+    for(int i = 0;i<entityArray.size();i++) {
+        std::string entityId = entityArray[i];
+        if (YZ::isModelGroup(entityId)) {
+            std::vector<std::string> subEntities;
+            if (YZ::getGroupRelComponent(entityId, subEntities)) {
+                for (auto item: subEntities) {
+                    entities.push_back(item);
+                }
+            }
+        } else {
+            auto groupId = YZ::getComponentOutmostGroup(entityId);
+            if (groupId.empty()) {
+                entities.push_back(entityId);
+            } else {
+                std::vector<std::string> subEntities;
+                if (YZ::getGroupRelComponent(groupId, subEntities)) {
+                    for (auto item: subEntities) {
+                        entities.push_back(item);
+                    }
+                }
+            }
+        }
+    }
+    modelViewer->ZoomModel()->zoomTo(entities);
+    modelViewer->RenderingThread()->updateSeveralTimes();
+}
+bool EBIMModel::zoomToEntity(std::string entityId){
+    if (YZ::isModelGroup(entityId)) {
+        std::vector<std::string> entities;
+        if (YZ::getGroupRelComponent(entityId, entities)) {
+            modelViewer->ZoomModel()->zoomTo(entityId);
+            return true;
+        }
+        return false;
+    } else {
+        std::string groupId = YZ::getComponentOutmostGroup(entityId);
+        if (groupId.empty()) {
+            return modelViewer->ZoomModel()->zoomTo(entityId);
+        } else {
+            std::vector<std::string> entities;
+            if (YZ::getGroupRelComponent(groupId, entities)) {
+                modelViewer->ZoomModel()->zoomTo(entities);
+                return true;
+            }
+            return false;
+        }
+    }
+}
+//位置 定位
+void EBIMModel::zoomToViewPortsPosition(std::vector<std::string> viewPortsPosition,std::vector<std::string> viewPortsTarget,
+                             std::vector<std::string> viewPortsUpVector,std::vector<std::string> viewPortsmatrix){
+    bimWorld::CameraView camera;
+    for (int i = 0; i < 3; i++) {
+        camera.position[i] = std::atof(viewPortsPosition[i].c_str());
+        camera.target[i] = std::atof(viewPortsTarget[i].c_str());
+        camera.upVector[i] = std::atof(viewPortsUpVector[i].c_str());
+    }
+
+    for (int i = 0; i< 16; i++) {
+        camera.matrix[i] = std::atof(viewPortsmatrix[i].c_str());
+    }
+    modelViewer->CameraSetting()->setCameraView(camera);
+}
+
+//取消透明，定位后会透明，定位还原
+void EBIMModel::unTransParentAll(){
+    modelViewer->NodeControl()->unTransParentAll();
+}
+//楼层
+void EBIMModel::modelSHFloor(std::string floorName,bool hidden){
+//    if (floorName == "") {
+//        return;
+//    }
+//    bimWorld::CategoryQueryKey key = new CategoryQueryKey(YZ::YZ_FLOOR, floorName);
+//    modelViewer->NodeControl()->setVisibleByCategory(key, hidden);
+//    modelViewer->RenderingThread()->updateSeveralTimes();
+}
+
+//专业
+void EBIMModel::modelSHDomain(std::string domainName,bool hidden,bool child){
+//    if (domainName == "") {
+//        return;
+//    }
+//    bimWorld::CategoryQueryKey key = new CategoryQueryKey(YZ::YZ_DOMAIN,domainName);
+//    modelViewer->NodeControl()->setVisibleByCategory(key, hidden);
+//    modelViewer->RenderingThread()->updateSeveralTimes();
+//    if (child) {
+//
+//    }
+}
+//专业->大类
+void EBIMModel::modelSHCategory(std::string categoryName,std::string domainName,bool hidden,bool child){
+
+}
+//专业->大类->小类
+void EBIMModel::modelSHEntityType(std::string entityTypeName,std::string categoryName,std::string domain,bool hidden,bool child){
+
+}
+// 专业
+std::vector<std::string> EBIMModel::getDomainNames(){
+        std::map<std::string, YZ::MapVecStdString> data;
+        YZ::getDomainCategoryName(data);
+        std::vector<std::string> domainData;
+//        for(int i = 0;i<data.size();i++) {
+//            std::vector<std::string> item = data[i];
+//            domainData.push_back(item.first);
+//        }
+        return domainData;
+}
+// 类别
+std::vector<std::string> EBIMModel::getCategoryNames(std::string domain){
+    std::vector<std::string> categoryData;
+//    if ( domain == "") {
+//        return categoryData;
+//    }
+//        std::map<std::string, YZ::MapVecStdString> data;
+//        YZ::getDomainCategoryName(data);
+//        YZ::MapVecStdString pos = data.find(domain);
+//        if (pos == data.end()) {
+//            return categoryData;
+//            } else {
+//
+//            }
+    return categoryData;
+}
+// 构件类型
+std::vector<std::string> EBIMModel::getEntityTypeNames(std::string domain ,std::string category){
+    std::vector<std::string> entityTypeNames;
+    return entityTypeNames;
+}
+std::map<std::string,std::string> EBIMModel::getEntity(std::string uuid){
+    std::map<std::string,std::string> entityMap;
+    if (uuid == "") {
+        return entityMap;
+    }
+    std::string floor;
+    std::string domain;
+    std::string category;
+    std::string name;
+    int revitId;
+    bool ret = false;
+    if (YZ::isModelGroup(uuid)) {
+        ret = YZ::getModelGroupProperty(uuid, floor, name, revitId);
+    } else {
+        ret = YZ::getComponentProperty(uuid, floor, domain, category, name, revitId);
+    }
+    if (!ret) {
+        return entityMap;
+    }
+    entityMap.insert(std::make_pair("floor",floor));
+    entityMap.insert(std::make_pair("domain",domain));
+    entityMap.insert(std::make_pair("category",category));
+    entityMap.insert(std::make_pair("name",name));
+    std::stringstream revitIdString;
+    revitIdString << revitId;
+    entityMap.insert(std::make_pair("revitId",revitIdString.str()));
+    return entityMap;
+}
+std::map<std::string, std::map<std::string, std::string>> EBIMModel::getEntityProperties(std::string uuid){
+    std::map<std::string, std::map<std::string, std::string>> entityPropertiesMap;
+    if (uuid == "") {
+        return entityPropertiesMap;
+    }
+    YZ::MapMapStdString data;
+    auto ret = false;
+    if (YZ::isModelGroup(uuid)) {
+        ret = YZ::getModelGroupProperty(uuid, data);
+    } else {
+        ret = YZ::getComponentProperty(uuid, data);
+    }
+    if (!ret) {
+        return entityPropertiesMap;
+    }
+    return data;
 }

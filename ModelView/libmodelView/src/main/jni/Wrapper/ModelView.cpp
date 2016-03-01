@@ -49,6 +49,12 @@ extern "C" {
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_hiddenOtherEntities(JNIEnv * env, jobject obj,jstring entityId);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unHiddenEntity(JNIEnv * env, jobject obj,jstring entityId);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unHiddenOtherEntities(JNIEnv * env, jobject obj,jstring entityId);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_resizeView(JNIEnv * env, jobject obj,jint x,jint y,jint width,jint height);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntity(JNIEnv * env, jobject obj,jstring entityId);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntities(JNIEnv * env, jobject obj,jobjectArray entities);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unTransParentAll(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToViewPortsPosition(JNIEnv * env, jobject obj,jobject viewMap);
+    JNIEXPORT jobject JNICALL Java_net_ezbim_modelview_ModelView_getEntityInfo(JNIEnv * env, jobject obj,jstring entityId);
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved) {
@@ -67,7 +73,7 @@ JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_exitModelView(JNIEnv *
 
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_init(JNIEnv * env, jobject obj, jint width, jint height){
     pEbimModel = new EBIMModel();
-    pEbimModel->initWithView(0,0,width,height);
+    pEbimModel->initWithView(0,0,(int)width,(int)height);
     pEbimModel->startRendering();
 }
 
@@ -90,27 +96,27 @@ JNIEXPORT jint JNICALL Java_net_ezbim_modelview_ModelView_loadObject(JNIEnv * en
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_mouseButtonPressEvent(JNIEnv * env, jobject obj, jfloat x, jfloat y, jint button){
     if(pEbimModel->valid()) {
-        pEbimModel->mouseButtonPressEvent(x, y, button);
+        pEbimModel->mouseButtonPressEvent((float)x, (float)y, (int)button);
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_mouseButtonReleaseEvent(JNIEnv * env, jobject obj, jfloat x, jfloat y, jint button){
     if(pEbimModel->valid()) {
-        pEbimModel->mouseButtonReleaseEvent(x, y, button);
+        pEbimModel->mouseButtonReleaseEvent((float)x, (float)y, (int)button);
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_mouseMoveEvent(JNIEnv * env, jobject obj, jfloat x, jfloat y){
     if(pEbimModel->valid()) {
-        pEbimModel->mouseMoveEvent(x, y);
+        pEbimModel->mouseMoveEvent((float)x, (float)y);
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_keyboardDown(JNIEnv * env, jobject obj, jint key){
     if(pEbimModel->valid()) {
-        pEbimModel->keyboardDown(key);
+        pEbimModel->keyboardDown((int)key);
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_keyboardUp(JNIEnv * env, jobject obj, jint key){
     if(pEbimModel->valid()) {
-        pEbimModel->keyboardUp(key);
+        pEbimModel->keyboardUp((int)key);
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_updateSeveralTimes(JNIEnv * env, jobject obj){
@@ -258,16 +264,14 @@ JNIEXPORT jobject JNICALL Java_net_ezbim_modelview_ModelView_getViewportCameraVi
     jmethodID hashmap_costruct = env->GetMethodID(hashmap_clazz, "<init>", "()V");
     jobject hashmap_obj = env->NewObject(hashmap_clazz, hashmap_costruct);
     if(pEbimModel->valid()) {
-        jmethodID hashmap_put = env->GetMethodID(hashmap_clazz, "put",
-                                                 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        jmethodID hashmap_put = env->GetMethodID(hashmap_clazz, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
         //ArrayList
         jclass class_arraylist = env->FindClass("java/util/ArrayList");
         jmethodID arraylist_construct_method = env->GetMethodID(class_arraylist, "<init>", "()V");
         jobject obj_arraylist = env->NewObject(class_arraylist, arraylist_construct_method, "");
         jobject obj_arraylist2 = env->NewObject(class_arraylist, arraylist_construct_method, "");
         jobject obj_arraylist3 = env->NewObject(class_arraylist, arraylist_construct_method, "");
-        jmethodID arraylist_add_method = env->GetMethodID(class_arraylist, "add",
-                                                          "(Ljava/lang/Object;)Z");
+        jmethodID arraylist_add_method = env->GetMethodID(class_arraylist, "add", "(Ljava/lang/Object;)Z");
 //    jmethodID arraylist_clear_method= env->GetMethodID(class_arraylist,"clear","()V");
         std::map <int, std::vector<double>> viewportMap = pEbimModel->getViewportCameraView();
         std::map < int, std::vector < double >> ::iterator
@@ -313,13 +317,10 @@ JNIEXPORT jobject JNICALL Java_net_ezbim_modelview_ModelView_getViewportCameraVi
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToViewPortCenter(JNIEnv *env, jobject obj,jobject viewMap){
     if(pEbimModel->valid()) {
         jclass hashmap_clazz = env->FindClass("java/util/HashMap");
-        jmethodID list_get = env->GetMethodID(hashmap_clazz, "get",
-                                              "(Ljava/lang/Object;)Ljava/lang/Object;");
-        jobject centerObject = env->CallObjectMethod(viewMap, list_get,
-                                                     env->NewStringUTF("center"));
+        jmethodID list_get = env->GetMethodID(hashmap_clazz, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+        jobject centerObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("center"));
         jobject rotObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("rot"));
-        jobject distanceObject = env->CallObjectMethod(viewMap, list_get,
-                                                       env->NewStringUTF("distance"));
+        jobject distanceObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("distance"));
 
         std::vector <double> centerVector;
         std::vector <double> rotVector;
@@ -427,4 +428,108 @@ JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unHiddenOtherEntities(
         pEbimModel->unHiddenOtherEntities(std::string(nativeAddress));
         env->ReleaseStringUTFChars(entityId, nativeAddress);
     }
+}
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_resizeView(JNIEnv * env, jobject obj,jint x,jint y,jint width,jint height){
+    if(pEbimModel->valid()) {
+        pEbimModel->resizeView((int)x,(int)y,(int)width,(int)height);
+    }
+}
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntity(JNIEnv * env, jobject obj,jstring entityId){
+    if(pEbimModel->valid()) {
+        const char *nativeAddress = env->GetStringUTFChars(entityId, JNI_FALSE);
+        pEbimModel->zoomToEntity(std::string(nativeAddress));
+        env->ReleaseStringUTFChars(entityId, nativeAddress);
+    }
+}
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntities(JNIEnv * env, jobject obj,jobject entities){
+    if(pEbimModel->valid()) {
+        jclass list_cls = env->FindClass("java/util/ArrayList");
+        jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V");
+        jobject list_obj = env->NewObject(list_cls, list_costruct, "");
+        jmethodID list_toarray = env->GetMethodID(list_cls, "toArray", "()[Ljava/lang/Object;");
+        jobjectArray array = (jobjectArray) env->CallObjectMethod(entities, list_toarray);
+        std::vector <std::string> sVector;
+        for (unsigned int i = 0; i < env->GetArrayLength(array); i++) {
+            jstring strObj = (jstring) env->GetObjectArrayElement(array, i);
+            const char *chr = env->GetStringUTFChars(strObj, JNI_FALSE);
+            sVector.push_back(std::string(chr));
+            env->ReleaseStringUTFChars(strObj, chr);
+        }
+        pEbimModel->zoomToEntities(sVector);
+    }
+}
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unTransParentAll(JNIEnv * env, jobject obj){
+    if(pEbimModel->valid()) {
+        pEbimModel->unTransParentAll();
+    }
+}
+//老的视口参数还原
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToViewPortsPosition(JNIEnv * env, jobject obj,jobject viewMap){
+    if(pEbimModel->valid()) {
+//        jclass hashmap_clazz = env->FindClass("java/util/HashMap");
+//        jmethodID list_get = env->GetMethodID(hashmap_clazz, "get","(Ljava/lang/Object;)Ljava/lang/Object;");
+//        jobject centerObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("center"));
+//        jobject rotObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("rot"));
+//        jobject distanceObject = env->CallObjectMethod(viewMap, list_get, env->NewStringUTF("distance"));
+//        std::vector <double> centerVector;
+//        std::vector <double> rotVector;
+//        jclass list_cls = env->FindClass("java/util/ArrayList");
+//        jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V");
+//        jobject list_obj = env->NewObject(list_cls, list_costruct, "");
+//        jmethodID list_toarray = env->GetMethodID(list_cls, "toArray", "()[Ljava/lang/Object;");
+//        jobjectArray centerArray = (jobjectArray) env->CallObjectMethod(centerObject, list_toarray);
+//        for (unsigned int i = 0; i < 3; i++) {
+//            jstring strObj = (jstring) env->GetObjectArrayElement(centerArray, i);
+//            const char *chr = env->GetStringUTFChars(strObj, JNI_FALSE);
+//            centerVector.push_back(std::atof(chr));
+//        }
+//
+//        jobjectArray rotArray = (jobjectArray) env->CallObjectMethod(rotObject, list_toarray);
+//        for (unsigned int i = 0; i < 16; i++) {
+//            jstring strObj = (jstring) env->GetObjectArrayElement(rotArray, i);
+//            const char *chr = env->GetStringUTFChars(strObj, JNI_FALSE);
+//            rotVector.push_back(std::atof(chr));
+//        }
+//        jobjectArray distanceArray = (jobjectArray) env->CallObjectMethod(distanceObject,list_toarray);
+//        jstring strObj = (jstring) env->GetObjectArrayElement(distanceArray, 0);
+//        const char *chr = env->GetStringUTFChars(strObj, JNI_FALSE);
+//        double distanceValue = std::atof(chr);
+//        pEbimModel->zoomToViewPortCenter(centerVector, distanceValue, rotVector);
+    }
+}
+JNIEXPORT jobject JNICALL Java_net_ezbim_modelview_ModelView_getEntityInfo(JNIEnv * env, jobject obj,jstring entityId){
+    //hashmap
+    jclass hashmap_clazz = env->FindClass("java/util/HashMap");
+    jmethodID hashmap_costruct = env->GetMethodID(hashmap_clazz, "<init>", "()V");
+    jobject hashmap_obj = env->NewObject(hashmap_clazz, hashmap_costruct);
+    if(pEbimModel->valid()) {
+        const char *nativeAddress = env->GetStringUTFChars(entityId, JNI_FALSE);
+        jmethodID hashmap_put = env->GetMethodID(hashmap_clazz, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        std::map<std::string,std::string> entityInfoMap = pEbimModel->getEntity(std::string(nativeAddress));
+        std::map<std::string, std::map<std::string, std::string>> entityPropertiesMap = pEbimModel->getEntityProperties(std::string(nativeAddress));
+        std::string floorString = entityInfoMap.find("floor")->second;
+        std::string domainString = entityInfoMap.find("domain")->second;
+        std::string categoryString = entityInfoMap.find("category")->second;
+        std::string nameString = entityInfoMap.find("name")->second;
+        std::string revitIdString = entityInfoMap.find("revitId")->second;
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("floor"), env->NewStringUTF(floorString.c_str()));
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("domain"), env->NewStringUTF(domainString.c_str()));
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("category"), env->NewStringUTF(categoryString.c_str()));
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("name"), env->NewStringUTF(nameString.c_str()));
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("revitId"), env->NewStringUTF(revitIdString.c_str()));
+        std::map<std::string, std::map<std::string, std::string>> ::iterator it;
+        jobject proMap_obj = env->NewObject(hashmap_clazz, hashmap_costruct);
+        for(it=entityPropertiesMap.begin();it!=entityPropertiesMap.end();it++){
+            jobject valueMap_obj = env->NewObject(hashmap_clazz, hashmap_costruct);
+            std::map<std::string, std::string> valueMap = it->second;
+            std::map<std::string, std::string>::iterator iter;
+            for(iter=valueMap.begin();iter!=valueMap.end();iter++){
+                env->CallObjectMethod(valueMap_obj, hashmap_put,env->NewStringUTF((iter->first).c_str()),env->NewStringUTF((iter->second).c_str()));
+            }
+            env->CallObjectMethod(proMap_obj, hashmap_put,env->NewStringUTF((it->first).c_str()),valueMap_obj);
+        }
+        env->CallObjectMethod(hashmap_obj, hashmap_put, env->NewStringUTF("properties"),proMap_obj);
+        env->ReleaseStringUTFChars(entityId, nativeAddress);
+    }
+    return hashmap_obj;
 }

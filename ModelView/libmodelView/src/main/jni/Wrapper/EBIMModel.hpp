@@ -13,6 +13,7 @@
 
 //Standard libraries
 #include <string>
+#include <sstream>
 #include <map>
 #include "IModelViewer.h"
 #include "ModelViewer.h"
@@ -20,6 +21,7 @@
 #include "IYZComponentCore.h"
 #include "YZPrerequire.h"
 #include "IYZModelCore.h"
+#include "IYZTemplateCore.h"
 #include "jni.h"
 
 #include "OsgAndroidNotifyHandler.hpp"
@@ -48,6 +50,7 @@ public:
     EBIMModel();
     ~EBIMModel();
 //    void deleteEBIMModel();
+    void resizeView(int x,int y,int width,int height);
     OsgAndroidNotifyHandler *_notifyHandler;
     bimWorld::IModelViewer* modelViewer;
     bool valid();
@@ -86,35 +89,38 @@ public:
     void setSkyBox(std::string imgPath);
     void updateSkyBox();
 
-//构件 定位
-//    void zoomToEntities(std::vector<std::string> entityArray);
-//    bool zoomToEntity(std::string entityId);
+    std::string clickSelection(double x,double y);
+
 // 获取视口参数
     std::map<int,std::vector<double>>  getViewportCameraView();
+    //pragma mark - 视口截图
+    std::map<int,std::vector<double>>  glToUIImage();
 
 // 定位到视口
     void zoomToViewPortCenter(std::vector<double> center,double distance,std::vector<double> rot);
-    //定位到构件
-    std::string clickSelection(double x,double y);
 
-//
-////位置 定位
-//    void zoomToViewPortsPosition(std::vector<std::string> viewPortsPosition,std::vector<std::string> viewPortsTarget,
-//                                 std::vector<std::string> viewPortsUpVector,std::vector<std::string> viewPortsmatrix);
-//
-////取消透明，定位后会透明，定位还原
-//    void unTransParentAll();
-////楼层
-//    void modelSHFloor(std::string floorName,boo hidden);
-//
-////专业
-//    void modelSHDomain(std::string domainName,bool hidden,bool child);
-////专业->大类
-//    void modelSHCategory(std::string categoryName,std::string domainName,bool hidden,bool child);
-////专业->大类->小类
-//    void modelSHEntityType(std::string entityTypeName,std::string categoryName,std::string domain,bool hidden,bool child);
-//
-//pragma mark -
+//构件 定位
+    void zoomToEntities(std::vector<std::string> entityArray);
+    bool zoomToEntity(std::string entityId);
+//位置 定位
+    void zoomToViewPortsPosition(std::vector<std::string> viewPortsPosition,std::vector<std::string> viewPortsTarget, std::vector<std::string> viewPortsUpVector,std::vector<std::string> viewPortsmatrix);
+//取消透明，定位后会透明，定位还原
+    void unTransParentAll();
+//楼层
+    void modelSHFloor(std::string floorName,bool hidden);
+
+    std::vector<std::string> getDomainNames(); // 专业
+    std::vector<std::string> getCategoryNames(std::string domain); // 类别
+    std::vector<std::string> getEntityTypeNames(std::string domain ,std::string category); // 构件类型
+    std::map<std::string,std::string> getEntity(std::string uuid);
+    std::map<std::string, std::map<std::string, std::string>> getEntityProperties(std::string uuid);
+//专业
+    void modelSHDomain(std::string domainName,bool hidden,bool child);
+//专业->大类
+    void modelSHCategory(std::string categoryName,std::string domainName,bool hidden,bool child);
+//专业->大类->小类
+    void modelSHEntityType(std::string entityTypeName,std::string categoryName,std::string domain,bool hidden,bool child);
+
 //高亮
     void highlight(std::string entityId);
 //取消高亮
@@ -127,19 +133,6 @@ public:
     void unHiddenEntity(std::string entityId);
 //取消隐藏 被显示
     void unHiddenOtherEntities(std::string entityId);
-//
-////pragma mark - 漫游器
-//    void enableFirstPersonControl();
-//    void disableFirstPersonControl();
-//
-////pragma mark - 操控
-//    void movePoint(CGPoint dir);
-//    void moveBegin();
-//    void moveEnd();
-
-////pragma mark - 视口截图
-//    Map<std::string,std::string>  glToUIImage();
-//    void setMoveFactorScale: (CGPoint)scale;
 
 private:
     std::string entityIdBySelect;
