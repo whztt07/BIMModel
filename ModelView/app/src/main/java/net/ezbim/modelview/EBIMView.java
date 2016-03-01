@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -12,6 +15,14 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
+import android.widget.AbsListView;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
@@ -21,17 +32,79 @@ import javax.microedition.khronos.egl.EGLDisplay;
 /**
  * Created by dev on 16/1/27.
  */
-public class EBIMView extends GLSurfaceView implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnDoubleTapListener {
+public class EBIMView extends GLSurfaceView implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnDoubleTapListener{
 
     private static final String TAG = "EBIMView";
     private static final boolean DEBUG = true;
     private static final boolean LOG_EGL = true;
+    private static final int MODEL_HIDE_LEVEL = 6;
+    private static int GLES_VERSION = 2;
     private GestureDetector gestureDetector;
     private ScaleGestureDetector scaleGestureDetector;
-    private static int glesVersion = 2;
     private int viewHeigh;
     private int viewWidth;
-    private String checkValue;
+    private String checkHisValue;
+    private static final int MSG_RENDER = 0x0001;
+    private Handler mHandler;
+    private boolean firstScroll = true;
+    private singleTapUpListener mSingleTapUpListener;
+
+    public void openRender(){
+        if(mHandler == null) {
+            final ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+            final List<Callable<Object>> threadCallers = new ArrayList<Callable<Object>>();
+            threadCallers.add(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    if(ModelView.needRenderNow()) {
+                        requestRender();
+                    }else{
+                        firstScroll = true;
+                    }
+                    return null;
+                }
+            });
+            threadCallers.add(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    SystemClock.sleep(33);
+                    return null;
+                }
+            });
+            HandlerThread handlerThread = new HandlerThread("RenderThread");
+            handlerThread.start();
+            mHandler = new Handler(handlerThread.getLooper()) {
+                @Override
+                public void handleMessage(Message msg) {
+                        synchronized (this) {
+                            try {
+                                cachedThreadPool.invokeAll(threadCallers);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            mHandler.sendEmptyMessage(MSG_RENDER);
+                        }
+                    }
+            };
+        }else if(!mHandler.hasMessages(MSG_RENDER)){
+            mHandler.sendEmptyMessage(MSG_RENDER);
+        }
+    }
+
+    public void closeRender(){
+        if(mHandler!=null && mHandler.hasMessages(MSG_RENDER)){
+            mHandler.removeMessages(MSG_RENDER);
+        }
+    }
+
+
+    public int getViewHeigh() {
+        return viewHeigh;
+    }
+
+    public int getViewWidth() {
+        return viewWidth;
+    }
 
     public EBIMView(Context context) {
         super(context);
@@ -43,18 +116,22 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
     public EBIMView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, false, 16, 8);
-        Log.d(TAG,"init");
+        Log.d(TAG,"init EBIMView");
     }
 
+
+
     private void init(Context context, boolean translucent, int depth, int stencil) {
-        setDebugFlags(GLSurfaceView.DEBUG_LOG_GL_CALLS);
+        if(LOG_EGL) {
+            setDebugFlags(GLSurfaceView.DEBUG_LOG_GL_CALLS);
+        }
         gestureDetector = new GestureDetector(context, this);
         scaleGestureDetector = new ScaleGestureDetector(context, this);
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         int reqGlEsVersion = activityManager.getDeviceConfigurationInfo().reqGlEsVersion;
         if (reqGlEsVersion == 0x00030000 || reqGlEsVersion == 0x00030001) {
-            glesVersion = 3;
-            Log.e("GLES_VERSION == ", "3");
+            GLES_VERSION = 3;
+            Log.e("GLES_VERSION", "3");
         }
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
          * If we want a translucent one, we should change the surface's
@@ -79,16 +156,14 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
                 new ConfigChooser(8, 8, 8, 8, depth, stencil) :
                 new ConfigChooser(5, 6, 5, 0, depth, stencil));
         setPreserveEGLContextOnPause(true);
-
     }
-
 
     private static class ContextFactory implements EGLContextFactory {
         private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
-            Log.w(TAG, "creating OpenGL ES " + glesVersion + " context");
-            int[] attrib_list = {EGL_CONTEXT_CLIENT_VERSION, glesVersion, EGL10.EGL_NONE};
+            Log.e(TAG, "creating OpenGL ES " + GLES_VERSION + " context");
+            int[] attrib_list = {EGL_CONTEXT_CLIENT_VERSION, GLES_VERSION, EGL10.EGL_NONE};
             EGLContext context = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
             return context;
         }
@@ -307,11 +382,13 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
     @Override
     public void onResume() {
 //        ModelView.rotationBegin(6);
+        Log.e(TAG,"onResume");
         super.onResume();
     }
 
     @Override
     public void onPause() {
+        Log.e(TAG,"onPause");
         super.onPause();
     }
 
@@ -345,61 +422,72 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
         super.onConfigurationChanged(newConfig);
     }
 
+    //初始化45度角
+    public void godEyes(){
+        ModelView.mouseMoveEvent(0.5f, -0.5f);
+        ModelView.updateSeveralTimes();
+    }
+
     /**
      * 手势操作
      */
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         //滑动
-        ModelView.rotationBegin(6);
+        if(firstScroll){
+//            Log.e(TAG,"I AM FIRST");
+            ModelView.rotationBegin(MODEL_HIDE_LEVEL);
+            firstScroll = false;
+        }
         if (e2.getPointerCount() == 1) {
             float finalX = -distanceX / viewWidth;
             float finalY = distanceY / viewHeigh;
             ModelView.mouseMoveEvent(finalX, finalY);
-//            requestRender();
             ModelView.updateSeveralTimes();
-            Log.d(TAG, "onScroll distanceX:" + distanceX + " distanceY:" + distanceY);
+//            Log.d(TAG, "onScroll distanceX:" + distanceX + " distanceY:" + distanceY);
             return true;
         }
         if (e2.getPointerCount() >= 3) {
             float finalX = -distanceX / viewWidth;
             float finalY = distanceY / viewHeigh;
             ModelView.onPanModel(0, finalX, finalY);
-//            requestRender();
             ModelView.updateSeveralTimes();
-            Log.d(TAG, "onPan distanceX:" + distanceX + " distanceY:" + distanceY);
+//            Log.d(TAG, "onPan distanceX:" + distanceX + " distanceY:" + distanceY);
             return true;
         }
-//        requestRender();
-//        ModelView.updateSeveralTimes();
         return false;
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
         //单点
-        Log.d(TAG, "onSingleTapUp");
-//        float floatX = e.getX(0);
-//        float floatY = e.getY(0);
-//        double dx = floatX / (viewWidth / 2) - 1;
-//        double dy = 1 - floatY / (viewHeigh / 2);
-//        String checkValue2 = ModelView.clickSelection(dx, dy);
-//        Log.e(TAG,checkValue2);
-//        if (checkValue != null && !"".equals(checkValue)) {
-//            ModelView.unHighlight(checkValue);
-//            ModelView.setFrameIgnore(true);
-//        }
-//        if (checkValue2 != null && !"".equals(checkValue2)) {
-//            checkValue = checkValue2;
-//            ModelView.highlight(checkValue);
-//            ModelView.setFrameIgnore(true);
-//        }
+//        Log.e(TAG, "onSingleTapUp start"+SystemClock.currentThreadTimeMillis());
+        float floatX = e.getX(0);
+        float floatY = e.getY(0);
+        double dx = floatX / (viewWidth / 2) - 1;
+        double dy = 1 - floatY / (viewHeigh / 2);
+        String checkValue = ModelView.clickSelection(dx, dy);
+        Log.e(TAG,checkValue);
+        if (checkHisValue != null && !"".equals(checkHisValue)) {
+            ModelView.setFrameIgnore(true);
+            ModelView.unHighlight(checkHisValue);
+        }
+        if (checkValue != null && !"".equals(checkValue)) {
+            checkHisValue = checkValue;
+            Log.e(TAG, "setFrameIgnore start == "+SystemClock.currentThreadTimeMillis());
+            ModelView.setFrameIgnore(true);
+            Log.e(TAG, "setFrameIgnore end == " + SystemClock.currentThreadTimeMillis());
+            ModelView.highlight(checkHisValue);
+            Log.e(TAG, "highlight end == " + SystemClock.currentThreadTimeMillis());
+            mSingleTapUpListener.IsSingelTagUp(checkValue);
+        }
+//        Log.e(TAG, "onSingleTapUp end == "+SystemClock.currentThreadTimeMillis());
         return false;
     }
 
     @Override
     public void onShowPress(MotionEvent e) {
-        Log.d("EBIMView", "onShowPress");
+        Log.d(TAG, "onShowPress");
     }
 
     @Override
@@ -419,10 +507,6 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
     @Override
     public boolean onDown(MotionEvent e) {
         Log.d(TAG, "onDown");
-
-
-//        requestRender();
-//        ModelView.updateSeveralTimes();
         return false;
     }
 
@@ -453,9 +537,8 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
         //差值
         float maxscale = (float) Math.sqrt(viewHeigh * viewWidth);
         float span = (detector.getPreviousSpan() - detector.getCurrentSpan()) / maxscale;
-        Log.d(TAG, "onScale(p:" + detector.getPreviousSpan() + " c:" + detector.getCurrentSpan() + " 比值:" + (detector.getCurrentSpan() - detector.getPreviousSpan()) / maxscale + ")");
+//        Log.d(TAG, "onScale(p:" + detector.getPreviousSpan() + " c:" + detector.getCurrentSpan() + " 比值:" + (detector.getCurrentSpan() - detector.getPreviousSpan()) / maxscale + ")");
         ModelView.zoomModel(1, 0, span);
-//        requestRender();
         ModelView.updateSeveralTimes();
         return true;
     }
@@ -463,7 +546,7 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
     @Override
     public boolean onScaleBegin(ScaleGestureDetector detector) {
         Log.d(TAG, "onScaleBegin");
-        ModelView.rotationBegin(6);
+        ModelView.rotationBegin(MODEL_HIDE_LEVEL);
         return true;
     }
 
@@ -472,4 +555,11 @@ public class EBIMView extends GLSurfaceView implements GestureDetector.OnGesture
         Log.d(TAG, "onScaleEnd");
     }
 
+    public interface singleTapUpListener{
+        public void IsSingelTagUp(String singleValue);
+    }
+
+    public void setSingleTapUpListener(singleTapUpListener mSingleTapUpListener){
+        this.mSingleTapUpListener = mSingleTapUpListener;
+    }
 }

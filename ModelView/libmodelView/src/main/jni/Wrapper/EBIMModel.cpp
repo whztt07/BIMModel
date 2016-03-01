@@ -6,16 +6,32 @@
 #include <string>
 
 EBIMModel::EBIMModel() {
+    modelViewer = NULL;
 }
 
 EBIMModel::~EBIMModel() {
-    LOGE("EBIMMODEL !!!!!");
+    LOGE("EBIMMODEL DELETE");
+}
+
+//void deleteEBIMModel(){
+//    delete modelViewer;
+//}
+
+bool EBIMModel::valid(){
+    if(modelViewer == NULL){
+        return false;
+    }
+    return true;
 }
 
 //初始化界面
 //return 0  =   failed
 //return 1  =   success
 void EBIMModel::initWithView(int x,int y,int width,int height){
+    _notifyHandler = new OsgAndroidNotifyHandler();
+    _notifyHandler->setTag("Osg Viewer");
+    osg::setNotifyHandler(_notifyHandler);
+    osg::notify(osg::ALWAYS)<<"OSG Notify Testing"<<std::endl;
     modelViewer = new bimWorld::ModelViewer(x,y,width,height);
     modelViewer->CameraManipulator()->bindMouseEvent(bimWorld::RIGHT_MOUSE_BUTTON, bimWorld::onRotateCamera);
     bimWorld::CategoryNode floor(YZ::YZ_FLOOR);
@@ -78,6 +94,10 @@ int EBIMModel::setModelData(std::string path){
 //    modelViewer->RenderingThread()->updateSeveralTimes();
 }
 
+bool EBIMModel::needRenderNow(){
+    return modelViewer->RenderingThread()->isRendering();
+}
+
 //设置view的操作模式
 void EBIMModel::setViewerMode(){
 
@@ -114,9 +134,9 @@ void EBIMModel::keyboardUp(int key){
     modelViewer->EventHandlers()->onKeyRelease(key);
 }
 
-//void EBIMModel::loadTest(){
-//    modelViewer->ModelLoader()->loadTest();
-//}
+void EBIMModel::loadTest(){
+    modelViewer->ModelLoader()->loadBox();
+}
 
 void EBIMModel::loadIVE(std::string path) {
     modelViewer->ModelLoader()->load(path.c_str());
@@ -264,10 +284,6 @@ void EBIMModel::highlight(std::string entityId){
         }
     }
 }
-//当前选中的 取消高亮
-void EBIMModel::unHighLightCurSelect(){
-    modelViewer->SelectionController()->clearSelection();
-}
 
 void EBIMModel::unHighlight(std::string entityId){
     bimWorld::INodeEntityController* nodeEntityController =  modelViewer->NodeControl();
@@ -287,4 +303,61 @@ void EBIMModel::unHighlight(std::string entityId){
             modelViewer->NodeControl()->unHighlightWithTopGroup(entities[0]);
         }
     }
+}
+
+//构件 隐藏
+void EBIMModel::hiddenEntity(std::string entityId){
+    if (YZ::isModelGroup(entityId)) {
+        std::vector<std::string> entities;
+        if (YZ::getGroupRelComponent(entityId, entities)) {
+            int entitiesLen = entities.size();
+            for (int i = 0; i<entitiesLen;i++) {
+                std::string item = entities[i];
+                modelViewer->NodeControl()->hide(item);
+            }
+        }
+    } else {
+        modelViewer->NodeControl()->hide(entityId);
+    }
+    modelViewer->RenderingThread()->updateSeveralTimes();
+}
+//构件显示
+void EBIMModel::hiddenOtherEntities(std::string entityId){
+    if (YZ::isModelGroup(entityId)) {
+        std::vector<std::string> entities;
+        if (YZ::getGroupRelComponent(entityId, entities)) {
+            modelViewer->NodeControl()->hideOthers(entities);
+        }
+    } else {
+        modelViewer->NodeControl()->hideOthers(entityId);
+    }
+    modelViewer->RenderingThread()->updateSeveralTimes();
+}
+//取消隐藏 被隐藏
+void EBIMModel::unHiddenEntity(std::string entityId){
+    if (YZ::isModelGroup(entityId)) {
+        std::vector<std::string> entities;
+        if (YZ::getGroupRelComponent(entityId, entities)) {
+            int entitiesLen = entities.size();
+            for (int i = 0; i< entitiesLen; i++) {
+                std::string item = entities[i];
+                modelViewer->NodeControl()->unHide(item);
+            }
+        }
+    } else {
+        modelViewer->NodeControl()->unHide(entityId);
+    }
+    modelViewer->RenderingThread()->updateSeveralTimes();
+}
+//取消隐藏 被显示
+void EBIMModel::unHiddenOtherEntities(std::string entityId){
+    if (YZ::isModelGroup(entityId)) {
+        std::vector<std::string> entities;
+        if (YZ::getGroupRelComponent(entityId, entities)) {
+            modelViewer->NodeControl()->unHideOthers(entities);
+        }
+    } else {
+        modelViewer->NodeControl()->unHideOthers(entityId);
+    }
+    modelViewer->RenderingThread()->updateSeveralTimes();
 }

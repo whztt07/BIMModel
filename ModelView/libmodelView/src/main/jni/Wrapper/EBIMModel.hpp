@@ -22,6 +22,8 @@
 #include "IYZModelCore.h"
 #include "jni.h"
 
+#include "OsgAndroidNotifyHandler.hpp"
+
 #include <osgDB/Registry>
 USE_OSGPLUGIN(ive)
 //USE_OSGPLUGIN(tga)
@@ -30,6 +32,7 @@ USE_OSGPLUGIN(ive)
 #define  LOG_TAG    "EBIMLIB"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
 
 struct YZOpenBIMState
 {
@@ -44,12 +47,16 @@ class EBIMModel{
 public:
     EBIMModel();
     ~EBIMModel();
+//    void deleteEBIMModel();
+    OsgAndroidNotifyHandler *_notifyHandler;
     bimWorld::IModelViewer* modelViewer;
+    bool valid();
     //初始化界面
     void initWithView(int x,int y,int width,int height);
     //加载模型数据
     int setModelData(std::string path);
-//    void loadTest();
+    bool needRenderNow();
+    void loadTest();
     void loadIVE(std::string path);
     std::vector<std::string> getFloorNames();
     void loadByFloor(std::vector<std::string> floorNames);
@@ -95,14 +102,8 @@ public:
 //    void zoomToViewPortsPosition(std::vector<std::string> viewPortsPosition,std::vector<std::string> viewPortsTarget,
 //                                 std::vector<std::string> viewPortsUpVector,std::vector<std::string> viewPortsmatrix);
 //
-////构件 隐藏
-//    void hiddenEntity(std::string entityId);
-////构件 显示
-//    void hiddenOtherEntities(std::string entityId);
-////属性显隐
-//
-////pragma mark - 显示控制
-//
+////取消透明，定位后会透明，定位还原
+//    void unTransParentAll();
 ////楼层
 //    void modelSHFloor(std::string floorName,boo hidden);
 //
@@ -116,17 +117,16 @@ public:
 //pragma mark -
 //高亮
     void highlight(std::string entityId);
-//当前选中的 取消高亮
-    void unHighLightCurSelect();
-//
 //取消高亮
     void unHighlight(std::string entityId);
-////取消透明
-//    void unTransParentAll();
-////取消隐藏 被隐藏
-//    void unHiddenEntity(std::string entityId);
-////取消隐藏 被显示
-//    void unHiddenOtherEntities(std::string entityId);
+    //构件 隐藏
+    void hiddenEntity(std::string entityId);
+//构件 显示
+    void hiddenOtherEntities(std::string entityId);
+//取消隐藏 被隐藏
+    void unHiddenEntity(std::string entityId);
+//取消隐藏 被显示
+    void unHiddenOtherEntities(std::string entityId);
 //
 ////pragma mark - 漫游器
 //    void enableFirstPersonControl();
@@ -136,16 +136,7 @@ public:
 //    void movePoint(CGPoint dir);
 //    void moveBegin();
 //    void moveEnd();
-//
-////pragma mark - 六视图
-////主视图 复位
-//    void switchToFrontView();
-//    void switchToBackView();
-//    void switchToLeftView();
-//    void switchToRightView();
-//    void switchToTopView();
-//    void switchToBottomView();
-//
+
 ////pragma mark - 视口截图
 //    Map<std::string,std::string>  glToUIImage();
 //    void setMoveFactorScale: (CGPoint)scale;

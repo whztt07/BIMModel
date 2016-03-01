@@ -13,10 +13,6 @@ public class ModelView {
         System.loadLibrary("modelView");
     }
 
-    /**
-     * @param width  the current view width
-     * @param height the current view height
-     */
     public static native void init(int width, int height);
 
     public static native void step();
@@ -81,5 +77,16 @@ public class ModelView {
 
     public static native void unHighlight(String entityID);//取消指定ID的高亮
 
-    public static native void unHighLightCurSelect();//取消当前选中的高亮
+    public static native boolean needRenderNow();
+
+//    public static native void exitModelView();//退出ModelView，清理ModelView在JNI的引用。如果需要重新调用，需要重新initModelView
+
+    public static native void hiddenEntity(String entityId); //隐藏某个构件
+
+    public static native void hiddenOtherEntities(String entityId);//只显示当前的构件，隐藏其他构件
+
+    public static native void unHiddenEntity(String entityId);//取消隐藏某个构件
+
+    public static native void unHiddenOtherEntities(String entityId);//取消（只显示当前的构件，隐藏其他构件）的状态
+
 }

@@ -3,6 +3,7 @@ apply plugin: "com.android.model.native"
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 def SRC_DIR = properties.getProperty('bim.dir')
+def INC_DIR = properties.getProperty('osg.dir')
 
 model {
 
@@ -30,7 +31,9 @@ model {
 
             cppFlags.add("-I" + file("src/main/jni/3rdParty/osg").absolutePath)
             cppFlags.add("-I" + file("src/main/jni/3rdParty/sqlite3").absolutePath)
-            cppFlags.add("-I" + file("src/main/jni/3rdParty/YZEffect").absolutePath)
+            cppFlags.add("-I" + file(INC_DIR + "/inc/public").absolutePath)
+            cppFlags.add("-I" + file(INC_DIR + "/inc/YZMaterial").absolutePath)
+            cppFlags.add("-I" + file(INC_DIR + "/inc/YZEffect").absolutePath)
             cppFlags.add("-I" + file(SRC_DIR + "/inc/common").absolutePath)
             cppFlags.add("-I" + file(SRC_DIR + "/inc/dragon").absolutePath)
             cppFlags.add("-I" + file(SRC_DIR + "/inc/giraffe").absolutePath)

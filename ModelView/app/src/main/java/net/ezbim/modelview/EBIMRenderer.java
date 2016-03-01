@@ -18,6 +18,9 @@ public class EBIMRenderer implements GLSurfaceView.Renderer {
     private boolean isinit;
     private boolean isreload;
 
+    public void setModelViewListener(ModelViewListener modelViewListener) {
+        this.modelViewListener = modelViewListener;
+    }
 
     public void setIsreload(boolean isreload) {
         this.isreload = isreload;
