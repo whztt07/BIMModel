@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 
 import junit.framework.Test;
@@ -68,9 +69,15 @@ public class OSGActivity extends AppCompatActivity{
                 String revitId = (String)propertiesMap.get("revitId");
                 Log.e(TAG,"revitId = "+revitId);
                 HashMap<String,HashMap<String,String>> propMap = (HashMap<String,HashMap<String,String>>)propertiesMap.get("properties");
-                Set<String> keys = propMap.keySet();
-                for(String key :keys){
-                    Log.e(TAG, "key=" + key + " value=" + propMap.get(key));
+                Set<String> keySet = propMap.keySet();
+                for(String key:keySet){
+                    HashMap<String,String> valueMap = propMap.get(key);
+                    Set<String> keySet2 = valueMap.keySet();
+                    String value = "123";
+                    for(String key2:keySet2){
+                        value = "key=" + key + " value=" + valueMap.get(key2);
+                    }
+                    Log.e(TAG, "key=" + key + " value=" + value);
                 }
                 Log.e(TAG,"SingleValue == "+singleValue);
             }
@@ -132,6 +139,10 @@ public class OSGActivity extends AppCompatActivity{
 //                    ModelView.hiddenOtherEntities(checkedValue);
 //                }
 //                viewMap = ModelView.getViewportCameraView();
+                if(!TextUtils.isEmpty(checkedValue)){
+                    ModelView.transParentAll();
+                    ModelView.zoomToEntity(checkedValue);
+                }
                 break;
             case R.id.text4:
 //                if(!TextUtils.isEmpty(checkedValue)) {
@@ -140,7 +151,9 @@ public class OSGActivity extends AppCompatActivity{
 //                }
 //                if(viewMap!=null && viewMap.size()>0)
 //                    ModelView.zoomToViewPortCenter(viewMap);
-                startActivity(new Intent(OSGActivity.this, TestActivity.class));
+//                startActivity(new Intent(OSGActivity.this, TestActivity.class));
+                ModelView.unTransParentAll();
+//                toolbar.setVisibility(View.GONE);
                 break;
             default:
                 break;
@@ -168,7 +181,7 @@ public class OSGActivity extends AppCompatActivity{
     protected void onDestroy() {
         super.onDestroy();
         Log.e(TAG, "onDestroy");
-        ModelView.unLoadAll();
+        ModelView.exitModelView();
         mView.closeRender();
     }
 

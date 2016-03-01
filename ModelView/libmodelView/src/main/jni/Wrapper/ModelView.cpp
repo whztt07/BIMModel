@@ -52,6 +52,7 @@ extern "C" {
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_resizeView(JNIEnv * env, jobject obj,jint x,jint y,jint width,jint height);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntity(JNIEnv * env, jobject obj,jstring entityId);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntities(JNIEnv * env, jobject obj,jobjectArray entities);
+    JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_transParentAll(JNIEnv * env, jobject obj);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unTransParentAll(JNIEnv * env, jobject obj);
     JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToViewPortsPosition(JNIEnv * env, jobject obj,jobject viewMap);
     JNIEXPORT jobject JNICALL Java_net_ezbim_modelview_ModelView_getEntityInfo(JNIEnv * env, jobject obj,jstring entityId);
@@ -456,6 +457,11 @@ JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_zoomToEntities(JNIEnv 
             env->ReleaseStringUTFChars(strObj, chr);
         }
         pEbimModel->zoomToEntities(sVector);
+    }
+}
+JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_transParentAll(JNIEnv * env, jobject obj){
+    if(pEbimModel->valid()) {
+        pEbimModel->transparentAll();
     }
 }
 JNIEXPORT void JNICALL Java_net_ezbim_modelview_ModelView_unTransParentAll(JNIEnv * env, jobject obj){

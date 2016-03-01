@@ -49,11 +49,12 @@ public class EBIMRenderer implements GLSurfaceView.Renderer {
             isinit = false;
             modelViewListener.onInitFinished();
             Log.e(TAG, "onInitFinished");
-        }
-        if (isreload) {
+        }else if (isreload) {
             isreload = false;
             modelViewListener.onModelReload();
             Log.e(TAG, "onModelReload");
+        }else{
+            ModelView.resizeView(0,0,width,height);
         }
         ModelView.updateSeveralTimes();
 //        BLog.e(TAG, "onSurfaceChanged");

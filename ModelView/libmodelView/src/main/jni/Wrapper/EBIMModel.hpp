@@ -104,6 +104,8 @@ public:
     bool zoomToEntity(std::string entityId);
 //位置 定位
     void zoomToViewPortsPosition(std::vector<std::string> viewPortsPosition,std::vector<std::string> viewPortsTarget, std::vector<std::string> viewPortsUpVector,std::vector<std::string> viewPortsmatrix);
+    //定位前先全透明
+    void transparentAll();
 //取消透明，定位后会透明，定位还原
     void unTransParentAll();
 //楼层

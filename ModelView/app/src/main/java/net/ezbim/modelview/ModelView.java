@@ -96,8 +96,13 @@ public class ModelView {
 
     public static native void zoomToEntities(ArrayList<String> entities);//定位到一组构件，其他构件处于透明状态。
 
-    public static native void unTransParentAll();//取消（其他构件处于透明状态）。
+    public static native void transParentAll();//设置全部透明状态
+
+    public static native void unTransParentAll();//取消全部透明状态
 
     public static native HashMap<String,Object> getEntityInfo(String entityId);
+    //KEY：floor,domain,category,name,revitId 的value都为string
+    //KEY:properties,value是HashMap<String,HashMap<String,String>>
+
 
 }

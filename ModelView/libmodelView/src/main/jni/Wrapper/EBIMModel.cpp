@@ -433,7 +433,9 @@ void EBIMModel::zoomToViewPortsPosition(std::vector<std::string> viewPortsPositi
     }
     modelViewer->CameraSetting()->setCameraView(camera);
 }
-
+void EBIMModel:: transparentAll(){
+    modelViewer->NodeControl()->transparentAll();
+}
 //取消透明，定位后会透明，定位还原
 void EBIMModel::unTransParentAll(){
     modelViewer->NodeControl()->unTransParentAll();
